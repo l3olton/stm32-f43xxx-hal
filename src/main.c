@@ -4,6 +4,7 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <stdbool.h>
+#include <stdio.h>
 
 #define FREQ 16000000 // CPU frequency 16Mhz
 
@@ -13,7 +14,7 @@ int main(void) {
     // usart_init(USART3, 0x008B); // divider for 115200 baud rate
     usart_init(USART3, 0x0683); // divider for 9600 baud rate
 
-    usart_write_buffer(USART3, "بسم الله\n", 16);
+    printf("بسم الله\n");
 
     gpio_set_mode(BLUE_LED_PIN, GPIO_MODE_OUTPUT);
     gpio_set_mode(GREEN_LED_PIN, GPIO_MODE_OUTPUT);
@@ -39,8 +40,9 @@ int main(void) {
             DELAY(delay_timer, 250);
         }
 
+        // TODO: why are there delays with multiple timers
         if (timer_expired(&usart_timer, 1000, s_ticks)) {
-            usart_write_buffer(USART3, "لا إله إلا الله\n", 28);
+            printf("لا إله إلا الله [tick: %ld]\n", s_ticks); // TODO: lsp error about type is incorrect
         }
     }
 
