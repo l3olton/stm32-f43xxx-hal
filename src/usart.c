@@ -31,7 +31,10 @@ void usart_init(struct Usart *usart, unsigned long usart_div) {
     usart->CR1 &= ~BIT(12) & ~BIT(15); // set data length to 8 bits and OVER8 to 0 (oversample by 16 bits)
     usart->CR2 &= ~BIT(12) & ~BIT(13); // set no. of stop bits to 1
     usart->BRR = usart_div;
-    usart->CR1 |= USART_ENABLE | USART_TRANSMITTER_ENABLE;
+    usart->CR1 |= USART_ENABLE
+        | USART_TRANSMITTER_ENABLE
+        | USART_RECEIVER_ENABLE
+        | USART_RECEIVE_INTERRUPT_ENABLE;
 }
 
 static inline void usart_write_byte(struct Usart *usart, uint8_t data) {
@@ -39,6 +42,10 @@ static inline void usart_write_byte(struct Usart *usart, uint8_t data) {
     usart->DR = data;
 }
 
-void usart_write_buffer(struct Usart *usart, char *buffer, size_t len) {
+void usart_write_buffer(struct Usart *usart, const char *buffer, size_t len) {
     while (len-- > 0) usart_write_byte(usart, *(uint8_t *) buffer++);
+}
+
+void usart_read_buffer(struct Usart *usart, uint8_t *buffer, size_t len) { // maybe change to char *buffer
+    while (len-- > 0) *buffer++ = usart_read_byte(usart);
 }

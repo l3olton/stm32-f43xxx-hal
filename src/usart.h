@@ -19,17 +19,22 @@ struct Usart {
 #define USART_ENABLE BIT(13)
 #define USART_TRANSMITTER_ENABLE BIT(3)
 #define USART_TRANSMISSION_COMPLETE BIT(6)
+#define USART_RECEIVER_ENABLE BIT(2)
+#define USART_RECEIVE_INTERRUPT_ENABLE BIT(5)
+#define USART_RECEIVE_READY BIT(5);
 
 void usart_init(struct Usart *usart, unsigned long usart_div);
 
 static inline int usart_read_ready(struct Usart *usart) {
-    return usart->SR & BIT(5); // if RXNE bit is set, data is ready to read
+    return usart->SR & USART_RECEIVE_READY;
 }
 
 static inline uint8_t usart_read_byte(struct Usart *usart) {
     return (uint8_t) (usart->DR & 255); // bottom 8 bits of DR register hold received value
 }
 
-void usart_write_buffer(struct Usart *usart, char *buffer, size_t len);
+void usart_write_buffer(struct Usart *usart, const char *buffer, size_t len);
+
+void usart_read_buffer(struct Usart *usart, uint8_t *buffer, size_t len);
 
 #endif

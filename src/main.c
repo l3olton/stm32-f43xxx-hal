@@ -14,17 +14,23 @@ int main(void) {
     // usart_init(USART3, 0x008B); // divider for 115200 baud rate
     usart_init(USART3, 0x0683); // divider for 9600 baud rate
 
-    printf("بسم الله\n");
+    printf("بسم الله\n"); // redirected to USART3
 
     gpio_set_mode(BLUE_LED_PIN, GPIO_MODE_OUTPUT);
     gpio_set_mode(GREEN_LED_PIN, GPIO_MODE_OUTPUT);
     gpio_set_mode(RED_LED_PIN, GPIO_MODE_OUTPUT);
 
     uint32_t led_timer = 0;
-    uint32_t usart_timer = 0;
+    // uint32_t usart_timer = 0;
     uint32_t delay_timer = 0;
 
     while (1) {
+        if (usart_read_ready(USART3)) {
+            uint8_t received[64];
+            usart_read_buffer(USART3, received, 10);
+            printf("%s\n", received);
+        }
+
         if (timer_expired(&led_timer, 1500, s_ticks)) {
             gpio_write(RED_LED_PIN, 1);
             DELAY(delay_timer, 250);
@@ -41,9 +47,9 @@ int main(void) {
         }
 
         // TODO: why are there delays with multiple timers
-        if (timer_expired(&usart_timer, 1000, s_ticks)) {
-            printf("لا إله إلا الله [tick: %ld]\n", s_ticks); // TODO: lsp error about type is incorrect
-        }
+        // if (timer_expired(&usart_timer, 1000, s_ticks)) {
+        //     printf("لا إله إلا الله [tick: %ld]\n", s_ticks);
+        // }
     }
 
     return 0;
