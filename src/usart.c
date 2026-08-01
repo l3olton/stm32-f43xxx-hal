@@ -1,7 +1,9 @@
 #include "usart.h"
 #include "rcc.h"
 #include "gpio.h"
+#include "nvic.h"
 #include <stddef.h>
+#include <stdio.h>
 
 void usart_init(struct Usart *usart, unsigned long usart_div) {
     uint8_t af = 7;
@@ -34,7 +36,41 @@ void usart_init(struct Usart *usart, unsigned long usart_div) {
     usart->CR1 |= USART_ENABLE
         | USART_TRANSMITTER_ENABLE
         | USART_RECEIVER_ENABLE
-        | USART_RECEIVE_INTERRUPT_ENABLE;
+        | USART_RECEIVE_INTERRUPT_ENABLE
+        | USART_IDLE_INTERRUPT_ENABLE;
+
+    // TODO: make generic
+    NVIC->ISER[1] |= BIT(7); // enable USART3 interrupt handler in NVIC
+}
+
+static inline int usart_read_ready(struct Usart *usart) {
+    return usart->SR & USART_RECEIVE_READY;
+}
+
+static inline uint8_t usart_read_byte(struct Usart *usart) {
+    return (uint8_t) (usart->DR & 255); // bottom 8 bits of DR register hold received value
+}
+
+void usart_read_buffer(struct Usart *usart, uint8_t *buffer, size_t len) { // maybe change to char *buffer
+    // while (len-- > 0) *buffer++ = usart_read_byte(usart);
+    for (size_t i = 0; i < len; ++i) {
+        if (usart_read_ready(usart)) {
+            buffer[i] = usart_read_byte(usart);
+        }
+    }
+}
+
+void USART3_IRQHandler(void) {
+    // TODO: use ring buffer
+    uint8_t received[64];
+    usart_read_buffer(USART3, received, 5);
+    printf("received: %s\r\n", received);
+
+    // clear USART_SR IDLE
+    if (USART3->SR & USART_SR_IDLE) {
+        USART3->SR;
+        USART3->DR;
+    }
 }
 
 static inline void usart_write_byte(struct Usart *usart, uint8_t data) {
@@ -44,8 +80,4 @@ static inline void usart_write_byte(struct Usart *usart, uint8_t data) {
 
 void usart_write_buffer(struct Usart *usart, const char *buffer, size_t len) {
     while (len-- > 0) usart_write_byte(usart, *(uint8_t *) buffer++);
-}
-
-void usart_read_buffer(struct Usart *usart, uint8_t *buffer, size_t len) { // maybe change to char *buffer
-    while (len-- > 0) *buffer++ = usart_read_byte(usart);
 }
