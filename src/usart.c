@@ -64,6 +64,7 @@ void usart_read_buffer(struct Usart *usart, uint8_t *buffer, size_t len) { // ma
 void USART3_IRQHandler(void) {
     // TODO: use ring buffer
     uint8_t received[64];
+    // TODO: only 1st char is recieved
     usart_read_buffer(USART3, received, 5);
     printf("received: %s\r\n", received);
 
