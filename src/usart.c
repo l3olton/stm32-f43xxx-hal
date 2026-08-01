@@ -60,6 +60,7 @@ void usart_read_buffer(struct Usart *usart, uint8_t *buffer, size_t len) { // ma
     }
 }
 
+// TODO: separate handler logic from specific usart peripheral (usart3)
 void USART3_IRQHandler(void) {
     // TODO: use ring buffer
     uint8_t received[64];
