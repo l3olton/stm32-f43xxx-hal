@@ -13,6 +13,11 @@ void HardFault_Handler(void) {
     while (1);
 }
 
+void USART3_IRQHandler(void)
+{
+    handle_usart_interrupt(USART3);
+}
+
 int main(void) {
     systick_init(16000000 / 1000);
 

@@ -51,46 +51,60 @@ void usart_init(struct Usart *usart, unsigned long usart_div) {
     ring_buf_init(&usart_ring_buffer, buf, USART_RING_BUF_SIZE);
 }
 
-static inline int usart_read_ready(struct Usart *usart) {
-    return usart->SR & USART_RECEIVE_READY;
+static inline uint32_t usart_has_overrun_err(struct Usart *usart)
+{
+    return usart->SR & USART_SR_ORE;
+}
+
+static inline uint32_t usart_has_framing_err(struct Usart *usart)
+{
+    return usart->SR & USART_SR_FE;
+}
+
+static inline uint32_t usart_has_parity_err(struct Usart *usart)
+{
+    return usart->SR & USART_SR_PE;
+}
+
+static inline uint32_t usart_has_idle_line(struct Usart *usart)
+{
+    return usart->SR & USART_SR_IDLE;
+}
+
+static inline uint32_t usart_read_ready(struct Usart *usart) {
+    return usart->SR & USART_SR_RXNE;
 }
 
 static inline uint8_t usart_read_byte(struct Usart *usart) {
     return (uint8_t) (usart->DR & 255); // bottom 8 bits of DR register hold received value
 }
 
-// TODO: separate handler logic from specific usart peripheral (usart3)
-void USART3_IRQHandler(void) {
-    // TODO: move direct bit operations into functions
-    if (USART3->SR & BIT(3)) {
-        // ORE bit set (overrun error)
+void handle_usart_interrupt(struct Usart *usart)
+{
+    if (usart_has_overrun_err(usart)) {
         printf("Overrun error\r\n");
         return;
     }
 
-    if (USART3->SR & BIT(1)) {
-        // FE bit set (framing error)
+    if (usart_has_framing_err(usart)) {
         printf("Framing error\r\n");
         return;
     }
 
-    if (USART3->SR & BIT(0)) {
-        // PE bit set (parity error)
+    if (usart_has_parity_err(usart)) {
         printf("Parity error\r\n");
         return;
     }
 
-    if (USART3->SR & BIT(5))
-        ring_buf_push(&usart_ring_buffer, USART3->DR & 255);
+    if (usart_read_ready(usart))
+        ring_buf_push(&usart_ring_buffer, usart_read_byte(usart));
 
-    if (USART3->SR & USART_SR_IDLE) {
-        // IDLE bit set (idle line detected)
+    if (usart_has_idle_line(usart)) {
         uint8_t out;
         while (ring_buf_pop(&usart_ring_buffer, &out))
             putchar(out);
         printf("\r\n");
-        USART3->SR;
-        USART3->DR;
+        usart->DR; // read to DR after read to SR clears SR IDLE bit
     }
 }
 
