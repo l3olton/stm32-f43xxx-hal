@@ -8,7 +8,8 @@
 
 #define FREQ 16000000 // CPU frequency 16Mhz
 
-void HardFault_Handler(void) {
+void HardFault_Handler(void)
+{
     printf("Hard fault\r\n");
     while (1);
 }
@@ -18,7 +19,8 @@ void USART3_IRQHandler(void)
     handle_usart_interrupt(USART3);
 }
 
-int main(void) {
+int main(void)
+{
     systick_init(16000000 / 1000);
 
     // usart_init(USART3, 0x008B); // divider for 115200 baud rate

@@ -12,7 +12,8 @@ struct SysTick {
 #define SYSTICK ((struct SysTick *) 0xe000e010)
 
 // TODO: macros for bits
-static inline void systick_init(uint32_t ticks) {
+static inline void systick_init(uint32_t ticks)
+{
     if ((ticks - 1) > 0xffffff) return; // limit value to 24-bit, systick timer is 24-bit counter
     SYSTICK->LOAD = ticks - 1; // value to countdown from
     SYSTICK->VAL = 0;

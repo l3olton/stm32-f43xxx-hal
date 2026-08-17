@@ -3,8 +3,7 @@
 
 #include <stdint.h>
 
-struct Nvic
-{
+struct Nvic {
   volatile uint32_t ISER[8];
   uint32_t RESERVED0[24];
   volatile uint32_t ICER[8];

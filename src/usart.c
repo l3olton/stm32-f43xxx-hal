@@ -11,7 +11,8 @@
 static uint8_t buf[USART_RING_BUF_SIZE];
 static RingBuffer usart_ring_buffer = {0};
 
-void usart_init(struct Usart *usart, unsigned long usart_div) {
+void usart_init(struct Usart *usart, unsigned long usart_div)
+{
     uint8_t af = 7;
     uint16_t rx = 0, tx = 0;
 
@@ -80,7 +81,8 @@ static inline uint32_t usart_transmission_complete(struct Usart *usart)
     return usart->SR & USART_SR_TC;
 }
 
-static inline uint8_t usart_read_byte(struct Usart *usart) {
+static inline uint8_t usart_read_byte(struct Usart *usart)
+{
     return (uint8_t) (usart->DR & 255); // bottom 8 bits of DR register hold received value
 }
 
@@ -113,12 +115,14 @@ void handle_usart_interrupt(struct Usart *usart)
     }
 }
 
-static inline void usart_write_byte(struct Usart *usart, uint8_t data) {
+static inline void usart_write_byte(struct Usart *usart, uint8_t data)
+{
     // TODO: use transmission complete interrupt instead of blocking
     while (!(usart_transmission_complete(usart)));
     usart->DR = data;
 }
 
-void usart_write_buffer(struct Usart *usart, const char *buffer, size_t len) {
+void usart_write_buffer(struct Usart *usart, const char *buffer, size_t len)
+{
     while (len-- > 0) usart_write_byte(usart, *(uint8_t *) buffer++);
 }
