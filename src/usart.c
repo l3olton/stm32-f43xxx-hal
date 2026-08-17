@@ -59,15 +59,6 @@ static inline uint8_t usart_read_byte(struct Usart *usart) {
     return (uint8_t) (usart->DR & 255); // bottom 8 bits of DR register hold received value
 }
 
-void usart_read_buffer(struct Usart *usart, uint8_t *buffer, size_t len) { // maybe change to char *buffer
-    // while (len-- > 0) *buffer++ = usart_read_byte(usart);
-    for (size_t i = 0; i < len; ++i) {
-        if (usart_read_ready(usart)) {
-            buffer[i] = usart_read_byte(usart);
-        }
-    }
-}
-
 // TODO: separate handler logic from specific usart peripheral (usart3)
 void USART3_IRQHandler(void) {
     // TODO: move direct bit operations into functions
