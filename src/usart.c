@@ -2,7 +2,9 @@
 #include "rcc.h"
 #include "gpio.h"
 #include "nvic.h"
+#include "ringbuffer.h"
 #include <stddef.h>
+#include <stdint.h>
 #include <stdio.h>
 
 void usart_init(struct Usart *usart, unsigned long usart_div) {
@@ -62,14 +64,34 @@ void usart_read_buffer(struct Usart *usart, uint8_t *buffer, size_t len) { // ma
 
 // TODO: separate handler logic from specific usart peripheral (usart3)
 void USART3_IRQHandler(void) {
-    // TODO: use ring buffer
-    uint8_t received[64];
-    // TODO: only 1st char is recieved
-    usart_read_buffer(USART3, received, 5);
-    printf("received: %s\r\n", received);
+    // TODO: move direct bit operations into functions
+    if (USART3->SR & BIT(3)) {
+        // ORE bit set (overrun error)
+        printf("Overrun error\r\n");
+        return;
+    }
+
+    if (USART3->SR & BIT(1)) {
+        // FE bit set (framing error)
+        printf("Framing error\r\n");
+        return;
+    }
+
+    if (USART3->SR & BIT(0)) {
+        // PE bit set (parity error)
+        printf("Parity error\r\n");
+        return;
+    }
+
+    if (USART3->SR & BIT(5))
+        ring_buf_push(USART3->DR & 255);
 
     // clear USART_SR IDLE
     if (USART3->SR & USART_SR_IDLE) {
+        uint8_t out;
+        while (ring_buf_pop(&out))
+            putchar(out);
+        printf("\r\n");
         USART3->SR;
         USART3->DR;
     }
