@@ -16,15 +16,15 @@ void usart_init(struct Usart *usart, unsigned long usart_div) {
     uint16_t rx = 0, tx = 0;
 
     if (usart == USART1) {
-        RCC->APB2ENR |= USART1_CLOCK_ENABLE;
+        RCC->APB2ENR |= RCC_APB2ENR_USART1EN;
         tx = PIN('A', 9); // select transmission pin
         rx = PIN('A', 10); // select receiving pin
     } else if (usart == USART2) {
-        RCC->APB1ENR |= USART2_CLOCK_ENABLE;
+        RCC->APB1ENR |= RCC_APB1ENR_USART2EN;
         tx = PIN('A', 2);
         rx = PIN('A', 3);
     } else if (usart == USART3) {
-        RCC->APB1ENR |= USART3_CLOCK_ENABLE;
+        RCC->APB1ENR |= RCC_APB1ENR_USART3EN;
         tx = PIN('D', 8);
         rx = PIN('D', 9);
     } else {
@@ -39,11 +39,11 @@ void usart_init(struct Usart *usart, unsigned long usart_div) {
     usart->CR1 &= ~BIT(12) & ~BIT(15); // set data length to 8 bits and OVER8 to 0 (oversample by 16 bits)
     usart->CR2 &= ~BIT(12) & ~BIT(13); // set no. of stop bits to 1
     usart->BRR = usart_div;
-    usart->CR1 |= USART_ENABLE
-        | USART_TRANSMITTER_ENABLE
-        | USART_RECEIVER_ENABLE
-        | USART_RECEIVE_INTERRUPT_ENABLE
-        | USART_IDLE_INTERRUPT_ENABLE;
+    usart->CR1 |= USART_CR1_UE
+        | USART_CR1_TE
+        | USART_CR1_RE
+        | USART_CR1_RXNEIE
+        | USART_CR1_IDLEIE;
 
     // TODO: make generic
     NVIC->ISER[1] |= BIT(7); // enable USART3 interrupt handler in NVIC
@@ -73,6 +73,11 @@ static inline uint32_t usart_has_idle_line(struct Usart *usart)
 
 static inline uint32_t usart_read_ready(struct Usart *usart) {
     return usart->SR & USART_SR_RXNE;
+}
+
+static inline uint32_t usart_transmission_complete(struct Usart *usart)
+{
+    return usart->SR & USART_SR_TC;
 }
 
 static inline uint8_t usart_read_byte(struct Usart *usart) {
@@ -109,7 +114,8 @@ void handle_usart_interrupt(struct Usart *usart)
 }
 
 static inline void usart_write_byte(struct Usart *usart, uint8_t data) {
-    while (!(usart->SR & USART_TRANSMISSION_COMPLETE));
+    // TODO: use transmission complete interrupt instead of blocking
+    while (!(usart_transmission_complete(usart)));
     usart->DR = data;
 }
 

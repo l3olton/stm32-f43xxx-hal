@@ -19,7 +19,7 @@ static inline void systick_init(uint32_t ticks) {
     SYSTICK->CTRL = BIT(0) // set bit 0 to enable the counter
         | BIT(1) // set bit 1 to enable interrupt when counter reaches 0
         | BIT(2); // set bit 2 to use system clock
-    RCC->APB2ENR |= BIT(14); // enable system configuration controller clock (SYSCFGEN)
+    RCC->APB2ENR |= RCC_APB2ENR_SYSCFGEN; // enable system configuration controller clock (SYSCFGEN)
 }
 
 extern volatile uint32_t s_ticks;
