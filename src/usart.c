@@ -86,8 +86,8 @@ void USART3_IRQHandler(void) {
     if (USART3->SR & BIT(5))
         ring_buf_push(USART3->DR & 255);
 
-    // clear USART_SR IDLE
     if (USART3->SR & USART_SR_IDLE) {
+        // IDLE bit set (idle line detected)
         uint8_t out;
         while (ring_buf_pop(&out))
             putchar(out);
