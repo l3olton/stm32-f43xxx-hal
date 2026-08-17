@@ -9,7 +9,6 @@ static RingBuffer ring_buffer = {0};
 void ring_buf_init(uint8_t *buffer, size_t size)
 {
     ring_buffer.buffer = buffer;
-    // memset(rb->buffer, 0, size);
     ring_buffer.write_index = 0;
     ring_buffer.read_index = 0;
     ring_buffer.size = size;
