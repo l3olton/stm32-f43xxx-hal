@@ -7,6 +7,10 @@
 #include <stdint.h>
 #include <stdio.h>
 
+#define USART_RING_BUF_SIZE 64
+static uint8_t buf[USART_RING_BUF_SIZE];
+static RingBuffer usart_ring_buffer = {0};
+
 void usart_init(struct Usart *usart, unsigned long usart_div) {
     uint8_t af = 7;
     uint16_t rx = 0, tx = 0;
@@ -43,6 +47,8 @@ void usart_init(struct Usart *usart, unsigned long usart_div) {
 
     // TODO: make generic
     NVIC->ISER[1] |= BIT(7); // enable USART3 interrupt handler in NVIC
+
+    ring_buf_init(&usart_ring_buffer, buf, USART_RING_BUF_SIZE);
 }
 
 static inline int usart_read_ready(struct Usart *usart) {
@@ -84,12 +90,12 @@ void USART3_IRQHandler(void) {
     }
 
     if (USART3->SR & BIT(5))
-        ring_buf_push(USART3->DR & 255);
+        ring_buf_push(&usart_ring_buffer, USART3->DR & 255);
 
     if (USART3->SR & USART_SR_IDLE) {
         // IDLE bit set (idle line detected)
         uint8_t out;
-        while (ring_buf_pop(&out))
+        while (ring_buf_pop(&usart_ring_buffer, &out))
             putchar(out);
         printf("\r\n");
         USART3->SR;

@@ -12,10 +12,10 @@ typedef struct {
     size_t size;
 } RingBuffer;
 
-void ring_buf_init(uint8_t *buffer, size_t size);
+void ring_buf_init(RingBuffer *rb, uint8_t *buffer, size_t size);
 
-bool ring_buf_push(uint8_t byte);
+bool ring_buf_push(RingBuffer *rb, uint8_t byte);
 
-bool ring_buf_pop(uint8_t *output);
+bool ring_buf_pop(RingBuffer *rb, uint8_t *output);
 
 #endif

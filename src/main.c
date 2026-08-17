@@ -1,5 +1,4 @@
 #include "gpio.h"
-#include "ringbuffer.h"
 #include "usart.h"
 #include "systick.h"
 #include <stddef.h>
@@ -19,12 +18,6 @@ int main(void) {
 
     // usart_init(USART3, 0x008B); // divider for 115200 baud rate
     usart_init(USART3, 0x0683); // divider for 9600 baud rate
-
-    // TODO: could go inside usart_init
-    const size_t rb_size = 64;
-    uint8_t buf[rb_size];
-    ring_buf_init(buf, rb_size);
-
     printf("بسم الله\r\n"); // redirected to USART3
 
     gpio_set_mode(BLUE_LED_PIN, GPIO_MODE_OUTPUT);
