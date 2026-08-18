@@ -13,21 +13,25 @@ static RingBuffer usart_ring_buffer = {0};
 
 void usart_init(struct Usart *usart, uint32_t usart_div)
 {
-    uint8_t af = 7;
+    uint8_t af = 7, irq_position;
     uint16_t rx = 0, tx = 0;
 
     if (usart == USART1) {
         RCC->APB2ENR |= RCC_APB2ENR_USART1EN;
         tx = PIN('A', 9); // select transmission pin
         rx = PIN('A', 10); // select receiving pin
+        irq_position = 37;
     } else if (usart == USART2) {
         RCC->APB1ENR |= RCC_APB1ENR_USART2EN;
         tx = PIN('A', 2);
         rx = PIN('A', 3);
+        irq_position = 38;
     } else if (usart == USART3) {
         RCC->APB1ENR |= RCC_APB1ENR_USART3EN;
         tx = PIN('D', 8);
         rx = PIN('D', 9);
+        irq_position = 39;
+    } else if (usart == USART3) {
     } else {
         return; // TODO: maybe handle differently
     }
@@ -46,8 +50,7 @@ void usart_init(struct Usart *usart, uint32_t usart_div)
         | USART_CR1_RXNEIE
         | USART_CR1_IDLEIE;
 
-    // TODO: make generic
-    NVIC->ISER[1] |= BIT(7); // enable USART3 interrupt handler in NVIC
+    NVIC->ISER[irq_position / 32] |= BIT(irq_position % 32);
 
     ring_buf_init(&usart_ring_buffer, buf, USART_RING_BUF_SIZE);
 }
