@@ -1,6 +1,7 @@
 #ifndef NVIC_H
 #define NVIC_H
 
+#include "utils.h"
 #include <stdint.h>
 
 struct Nvic {
@@ -19,5 +20,11 @@ struct Nvic {
   volatile  uint32_t STIR;
 };
 #define NVIC ((struct Nvic *) 0xe000e100)
+
+static inline void nvic_enable_interrupt(const uint8_t vector_position)
+{
+    if (vector_position <= 239) // NVIC supports 240 interrupts 0-239
+        NVIC->ISER[vector_position / 32] |= BIT(vector_position % 32);
+}
 
 #endif
