@@ -21,7 +21,7 @@ static bool ring_buf_is_empty(const RingBuffer *rb)
     return rb->write_index == rb->read_index;
 }
 
-bool ring_buf_push(RingBuffer *rb, uint8_t byte)
+bool ring_buf_push(RingBuffer *rb, const uint8_t byte)
 {
     if (ring_buf_is_full(rb)) return false;
     rb->buffer[rb->write_index] = byte;
