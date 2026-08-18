@@ -29,7 +29,7 @@ struct Usart {
 #define USART_SR_RXNE BIT(5)
 #define USART_SR_TC BIT(6)
 
-void usart_init(struct Usart *usart, unsigned long usart_div);
+void usart_init(struct Usart *usart, uint32_t usart_div);
 
 void handle_usart_interrupt(struct Usart *usart);
 

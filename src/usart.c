@@ -11,7 +11,7 @@
 static uint8_t buf[USART_RING_BUF_SIZE];
 static RingBuffer usart_ring_buffer = {0};
 
-void usart_init(struct Usart *usart, unsigned long usart_div)
+void usart_init(struct Usart *usart, uint32_t usart_div)
 {
     uint8_t af = 7;
     uint16_t rx = 0, tx = 0;
