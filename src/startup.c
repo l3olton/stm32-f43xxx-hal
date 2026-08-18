@@ -10,9 +10,31 @@ __attribute__((naked, noreturn)) void _reset(void)
 }
 
 extern void _estack(void);
-extern void HardFault_Handler(void);
-extern void SysTick_Handler(void);
-extern void USART3_IRQHandler(void);
+
+__attribute__((weak)) void HardFault_Handler(void)
+{
+    while (1);
+}
+
+__attribute__((weak)) void SysTick_Handler(void)
+{
+    while (1);
+}
+
+__attribute__((weak)) void USART1_IRQHandler(void)
+{
+    while (1);
+}
+
+__attribute__((weak)) void USART2_IRQHandler(void)
+{
+    while (1);
+}
+
+__attribute__((weak)) void USART3_IRQHandler(void)
+{
+    while (1);
+}
 
 __attribute__((section(".vectors"))) void (*const tab[16 + 91])(void) = {
     _estack, // 0
@@ -68,7 +90,7 @@ __attribute__((section(".vectors"))) void (*const tab[16 + 91])(void) = {
     0, // 34
     0, // 35
     0, // 36
-    0, // 37
-    0, // 38
+    USART1_IRQHandler, // 37
+    USART2_IRQHandler, // 38
     USART3_IRQHandler // 39
 };
