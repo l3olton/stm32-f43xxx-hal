@@ -116,7 +116,7 @@ void handle_usart_interrupt(struct Usart *usart)
     }
 }
 
-static inline void usart_write_byte(struct Usart *usart, uint8_t data)
+static inline void usart_write_byte(struct Usart *usart, const uint8_t data)
 {
     // TODO: use transmission complete interrupt instead of blocking
     while (!(usart_transmission_complete(usart)));
