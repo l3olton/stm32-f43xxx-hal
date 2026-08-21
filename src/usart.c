@@ -28,6 +28,14 @@ static UsartHandle usart_1_handle;
 static UsartHandle usart_2_handle;
 static UsartHandle usart_3_handle;
 
+static UsartHandle *get_usart_handle(const Usart *usart)
+{
+    if (usart == USART1) return &usart_1_handle;
+    if (usart == USART2) return &usart_2_handle;
+    if (usart == USART3) return &usart_3_handle;
+    return NULL;
+}
+
 void usart_init(Usart *usart, const uint32_t usart_div)
 {
     const uint8_t af = 7;
@@ -115,15 +123,6 @@ static inline uint8_t usart_read_byte(Usart *usart)
 
 void handle_usart_interrupt(Usart *usart)
 {
-    // TODO: find way to avoid this
-    UsartHandle *usart_handle = NULL;
-    if (usart == USART1)
-        usart_handle = &usart_1_handle;
-    else if (usart == USART2)
-        usart_handle = &usart_2_handle;
-    else if (usart == USART3)
-        usart_handle = &usart_3_handle;
-
     if (usart_has_overrun_err(usart)) {
         printf("Overrun error\r\n");
         return;
@@ -138,6 +137,8 @@ void handle_usart_interrupt(Usart *usart)
         printf("Parity error\r\n");
         return;
     }
+
+    UsartHandle *usart_handle = get_usart_handle(usart);
 
     if (usart_read_ready(usart))
         ring_buf_push(&usart_handle->rx_ring_buffer, usart_read_byte(usart));
