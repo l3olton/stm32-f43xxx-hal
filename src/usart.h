@@ -6,13 +6,13 @@
 #include <stdint.h>
 
 // TODO: do the struct fields need to public?
-struct Usart {
+typedef struct {
     volatile uint32_t SR, DR, BRR, CR1, CR2, CR3, GTPR;
-};
+} Usart;
 
-#define USART1 ((struct Usart *) 0x40011000)
-#define USART2 ((struct Usart *) 0x40004400)
-#define USART3 ((struct Usart *) 0x40004800)
+#define USART1 ((Usart *) 0x40011000)
+#define USART2 ((Usart *) 0x40004400)
+#define USART3 ((Usart *) 0x40004800)
 
 // TODO: do these macros need to be public?
 
@@ -29,10 +29,10 @@ struct Usart {
 #define USART_SR_RXNE BIT(5)
 #define USART_SR_TC BIT(6)
 
-void usart_init(struct Usart *usart, uint32_t usart_div);
+void usart_init(Usart *usart, uint32_t usart_div);
 
-void handle_usart_interrupt(struct Usart *usart);
+void handle_usart_interrupt(Usart *usart);
 
-void usart_write_buffer(struct Usart *usart, const char *buffer, size_t len);
+void usart_write_buffer(Usart *usart, const char *buffer, size_t len);
 
 #endif

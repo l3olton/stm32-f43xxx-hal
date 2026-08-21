@@ -11,7 +11,7 @@
 static uint8_t buf[USART_RING_BUF_SIZE];
 static RingBuffer usart_ring_buffer = {0};
 
-void usart_init(struct Usart *usart, const uint32_t usart_div)
+void usart_init(Usart *usart, const uint32_t usart_div)
 {
     uint8_t af = 7, irq_handler;
     uint16_t rx = 0, tx = 0;
@@ -53,41 +53,41 @@ void usart_init(struct Usart *usart, const uint32_t usart_div)
     ring_buf_init(&usart_ring_buffer, buf, USART_RING_BUF_SIZE);
 }
 
-static inline uint32_t usart_has_overrun_err(struct Usart *usart)
+static inline uint32_t usart_has_overrun_err(Usart *usart)
 {
     return usart->SR & USART_SR_ORE;
 }
 
-static inline uint32_t usart_has_framing_err(struct Usart *usart)
+static inline uint32_t usart_has_framing_err(Usart *usart)
 {
     return usart->SR & USART_SR_FE;
 }
 
-static inline uint32_t usart_has_parity_err(struct Usart *usart)
+static inline uint32_t usart_has_parity_err(Usart *usart)
 {
     return usart->SR & USART_SR_PE;
 }
 
-static inline uint32_t usart_has_idle_line(struct Usart *usart)
+static inline uint32_t usart_has_idle_line(Usart *usart)
 {
     return usart->SR & USART_SR_IDLE;
 }
 
-static inline uint32_t usart_read_ready(struct Usart *usart) {
+static inline uint32_t usart_read_ready(Usart *usart) {
     return usart->SR & USART_SR_RXNE;
 }
 
-static inline uint32_t usart_transmission_complete(struct Usart *usart)
+static inline uint32_t usart_transmission_complete(Usart *usart)
 {
     return usart->SR & USART_SR_TC;
 }
 
-static inline uint8_t usart_read_byte(struct Usart *usart)
+static inline uint8_t usart_read_byte(Usart *usart)
 {
     return (uint8_t) (usart->DR & 255); // bottom 8 bits of DR register hold received value
 }
 
-void handle_usart_interrupt(struct Usart *usart)
+void handle_usart_interrupt(Usart *usart)
 {
     if (usart_has_overrun_err(usart)) {
         printf("Overrun error\r\n");
@@ -116,7 +116,7 @@ void handle_usart_interrupt(struct Usart *usart)
     }
 }
 
-static inline void usart_write_byte(struct Usart *usart, const uint8_t data)
+static inline void usart_write_byte(Usart *usart, const uint8_t data)
 {
     // TODO: use transmission complete interrupt instead of blocking
     while (!(usart_transmission_complete(usart)));
