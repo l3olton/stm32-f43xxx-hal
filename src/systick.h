@@ -6,10 +6,10 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-struct SysTick {
+typedef struct {
     volatile uint32_t CTRL, LOAD, VAL, CALIB;
-};
-#define SYSTICK ((struct SysTick *) 0xe000e010)
+} SysTick;
+#define SYSTICK ((SysTick *) 0xe000e010)
 
 // TODO: macros for bits
 static inline void systick_init(uint32_t ticks)
