@@ -22,7 +22,7 @@ typedef struct {
 typedef enum { GPIO_MODE_INPUT, GPIO_MODE_OUTPUT, GPIO_MODE_AF, GPIO_MODE_ANALOG } GpioMode;
 
 // TODO: possibly rewrite for readability
-static inline void gpio_set_mode(uint16_t pin, GpioMode mode)
+static inline void gpio_set_mode(const uint16_t pin, const GpioMode mode)
 {
     Gpio *gpio = GPIO(PINBANK(pin));
     int n = PINNO(pin);
@@ -32,14 +32,14 @@ static inline void gpio_set_mode(uint16_t pin, GpioMode mode)
 }
 
 // TODO: possibly rewrite for readability
-static inline void gpio_write(uint16_t pin, bool val)
+static inline void gpio_write(const uint16_t pin, const bool val)
 {
     Gpio *gpio = GPIO(PINBANK(pin));
     gpio->BSRR = (1U << PINNO(pin)) << (val ? 0 : 16);
 }
 
 // TODO: possibly rewrite for readability
-static inline void gpio_set_af(uint16_t pin, uint8_t af_num)
+static inline void gpio_set_af(const uint16_t pin, const uint8_t af_num)
 {
     Gpio *gpio = GPIO(PINBANK(pin));
     int n = PINNO(pin);
