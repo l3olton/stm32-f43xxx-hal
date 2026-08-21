@@ -3,7 +3,7 @@
 #include <stddef.h>
 #include <stdint.h>
 
-void ring_buf_init(RingBuffer *rb, uint8_t *buffer, size_t size)
+void ring_buf_init(RingBuffer *rb, uint8_t *buffer, const size_t size)
 {
     rb->buffer = buffer;
     rb->write_index = 0;
