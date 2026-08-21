@@ -13,7 +13,8 @@ static RingBuffer usart_ring_buffer = {0};
 
 void usart_init(Usart *usart, const uint32_t usart_div)
 {
-    uint8_t af = 7, irq_handler;
+    const uint8_t af = 7;
+    uint8_t irq_handler;
     uint16_t rx = 0, tx = 0;
 
     if (usart == USART1) {
