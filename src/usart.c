@@ -124,7 +124,7 @@ static inline void usart_write_byte(Usart *usart, const uint8_t data)
     usart->DR = data;
 }
 
-void usart_write_buffer(struct Usart *usart, const char *buffer, size_t len)
+void usart_write_buffer(Usart *usart, const char *buffer, size_t len)
 {
     while (len-- > 0) usart_write_byte(usart, *(uint8_t *) buffer++);
 }
