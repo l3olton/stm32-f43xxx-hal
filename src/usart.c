@@ -8,8 +8,25 @@
 #include <stdio.h>
 
 #define USART_RING_BUF_SIZE 64
-static uint8_t buf[USART_RING_BUF_SIZE];
-static RingBuffer usart_ring_buffer = {0};
+
+typedef struct {
+    Usart *usart;
+    RingBuffer tx_ring_buffer;
+    RingBuffer rx_ring_buffer;
+} UsartHandle;
+
+static uint8_t usart_1_tx_buffer[USART_RING_BUF_SIZE];
+static uint8_t usart_1_rx_buffer[USART_RING_BUF_SIZE];
+
+static uint8_t usart_2_tx_buffer[USART_RING_BUF_SIZE];
+static uint8_t usart_2_rx_buffer[USART_RING_BUF_SIZE];
+
+static uint8_t usart_3_tx_buffer[USART_RING_BUF_SIZE];
+static uint8_t usart_3_rx_buffer[USART_RING_BUF_SIZE];
+
+static UsartHandle usart_1_handle;
+static UsartHandle usart_2_handle;
+static UsartHandle usart_3_handle;
 
 void usart_init(Usart *usart, const uint32_t usart_div)
 {
@@ -21,17 +38,26 @@ void usart_init(Usart *usart, const uint32_t usart_div)
         RCC->APB2ENR |= RCC_APB2ENR_USART1EN;
         tx = PIN('A', 9); // select transmission pin
         rx = PIN('A', 10); // select receiving pin
-        irq_handler = 37;
+        irq_handler = 37; // TODO: create #defines for these or something
+        usart_1_handle.usart = USART1;
+        ring_buf_init(&usart_1_handle.tx_ring_buffer, usart_1_tx_buffer, USART_RING_BUF_SIZE);
+        ring_buf_init(&usart_1_handle.rx_ring_buffer, usart_1_rx_buffer, USART_RING_BUF_SIZE);
     } else if (usart == USART2) {
         RCC->APB1ENR |= RCC_APB1ENR_USART2EN;
         tx = PIN('A', 2);
         rx = PIN('A', 3);
         irq_handler = 38;
+        usart_2_handle.usart = USART2;
+        ring_buf_init(&usart_2_handle.tx_ring_buffer, usart_2_tx_buffer, USART_RING_BUF_SIZE);
+        ring_buf_init(&usart_2_handle.rx_ring_buffer, usart_2_rx_buffer, USART_RING_BUF_SIZE);
     } else if (usart == USART3) {
         RCC->APB1ENR |= RCC_APB1ENR_USART3EN;
         tx = PIN('D', 8);
         rx = PIN('D', 9);
         irq_handler = 39;
+        usart_3_handle.usart = USART3;
+        ring_buf_init(&usart_3_handle.tx_ring_buffer, usart_3_tx_buffer, USART_RING_BUF_SIZE);
+        ring_buf_init(&usart_3_handle.rx_ring_buffer, usart_3_rx_buffer, USART_RING_BUF_SIZE);
     } else {
         return; // TODO: maybe handle differently
     }
@@ -51,7 +77,6 @@ void usart_init(Usart *usart, const uint32_t usart_div)
         | USART_CR1_IDLEIE;
 
     nvic_enable_interrupt(irq_handler);
-    ring_buf_init(&usart_ring_buffer, buf, USART_RING_BUF_SIZE);
 }
 
 static inline uint32_t usart_has_overrun_err(Usart *usart)
@@ -90,6 +115,15 @@ static inline uint8_t usart_read_byte(Usart *usart)
 
 void handle_usart_interrupt(Usart *usart)
 {
+    // TODO: find way to avoid this
+    UsartHandle *usart_handle = NULL;
+    if (usart == USART1)
+        usart_handle = &usart_1_handle;
+    else if (usart == USART2)
+        usart_handle = &usart_2_handle;
+    else if (usart == USART3)
+        usart_handle = &usart_3_handle;
+
     if (usart_has_overrun_err(usart)) {
         printf("Overrun error\r\n");
         return;
@@ -106,12 +140,12 @@ void handle_usart_interrupt(Usart *usart)
     }
 
     if (usart_read_ready(usart))
-        ring_buf_push(&usart_ring_buffer, usart_read_byte(usart));
+        ring_buf_push(&usart_handle->rx_ring_buffer, usart_read_byte(usart));
 
     if (usart_has_idle_line(usart)) {
         uint8_t out;
-        while (ring_buf_pop(&usart_ring_buffer, &out))
-            putchar(out);
+        while (ring_buf_pop(&usart_handle->rx_ring_buffer, &out))
+            putchar(out); // TODO: substitute for callback
         printf("\r\n");
         usart->DR; // read to DR after read to SR clears SR IDLE bit
     }
