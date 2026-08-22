@@ -1,10 +1,11 @@
 #include "usart.h"
+#include <stdint.h>
 #include <sys/stat.h>
 
 int _write(int fd, char *ptr, int len)
 {
     (void) fd, (void) ptr, (void) len;
-    if (fd == 1) usart_write_buffer(USART3, ptr, (size_t) len);
+    if (fd == 1) usart_write_buffer(USART3, (uint8_t *) ptr, (size_t) len);
     return -1;
 }
 

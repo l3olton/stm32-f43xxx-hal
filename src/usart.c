@@ -111,6 +111,11 @@ static inline uint32_t usart_read_ready(Usart *usart) {
     return usart->SR & USART_SR_RXNE;
 }
 
+static inline uint32_t usart_transmission_data_reg_empty(const Usart *usart)
+{
+    return usart->SR & USART_SR_TXE;
+}
+
 static inline uint32_t usart_transmission_complete(Usart *usart)
 {
     return usart->SR & USART_SR_TC;
@@ -139,9 +144,12 @@ void handle_usart_interrupt(Usart *usart)
     }
 
     UsartHandle *usart_handle = get_usart_handle(usart);
+    if (!usart_handle) return;
 
-    if (usart_read_ready(usart))
+    if (usart_read_ready(usart)) {
         ring_buf_push(&usart_handle->rx_ring_buffer, usart_read_byte(usart));
+        return;
+    }
 
     if (usart_has_idle_line(usart)) {
         uint8_t out;
@@ -149,17 +157,33 @@ void handle_usart_interrupt(Usart *usart)
             putchar(out); // TODO: substitute for callback
         printf("\r\n");
         usart->DR; // read to DR after read to SR clears SR IDLE bit
+        return;
+    }
+
+    if (usart_transmission_data_reg_empty(usart) && (usart->CR1 & USART_CR1_TXEIE) != 0) {
+        if (!ring_buf_pop(&usart_handle->tx_ring_buffer, (uint8_t *) &usart->DR)) {
+            usart->CR1 &= ~USART_CR1_TXEIE;
+            usart->CR1 |= USART_CR1_TCIE; // TODO: funcs for these
+        }
+        return;
+    }
+
+    if (usart_transmission_complete(usart) && (usart->CR1 & USART_CR1_TCIE) != 0) {
+        usart->CR1 &= ~USART_CR1_TCIE; // TODO: func
+        return;
     }
 }
 
-static inline void usart_write_byte(Usart *usart, const uint8_t data)
+// TODO: investigate chars getting dropped (maybe related to casting)
+void usart_write_buffer(Usart *usart, const uint8_t *buffer, size_t len)
 {
-    // TODO: use transmission complete interrupt instead of blocking
-    while (!(usart_transmission_complete(usart)));
-    usart->DR = data;
-}
+    UsartHandle *usart_handle = get_usart_handle(usart);
+    if (!usart_handle) return;
 
-void usart_write_buffer(Usart *usart, const char *buffer, size_t len)
-{
-    while (len-- > 0) usart_write_byte(usart, *(uint8_t *) buffer++);
+    if (len > USART_RING_BUF_SIZE) len = USART_RING_BUF_SIZE;
+    while (len-- > 0) ring_buf_push(&usart_handle->tx_ring_buffer, *buffer++);
+
+    usart->CR1 |= USART_CR1_TXEIE; // TODO: function for this
+
+    ring_buf_pop(&usart_handle->tx_ring_buffer, (uint8_t *) &usart->DR);
 }
