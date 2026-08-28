@@ -87,36 +87,72 @@ void usart_init(Usart *usart, const uint32_t usart_div)
     nvic_enable_interrupt(irq_handler);
 }
 
-static inline uint32_t usart_has_overrun_err(Usart *usart)
+// TODO: check if these get inlined
+static uint32_t usart_has_overrun_err(const Usart *usart)
 {
     return usart->SR & USART_SR_ORE;
 }
 
-static inline uint32_t usart_has_framing_err(Usart *usart)
+static uint32_t usart_has_framing_err(const Usart *usart)
 {
     return usart->SR & USART_SR_FE;
 }
 
-static inline uint32_t usart_has_parity_err(Usart *usart)
+static uint32_t usart_has_parity_err(const Usart *usart)
 {
     return usart->SR & USART_SR_PE;
 }
 
-static inline uint32_t usart_has_idle_line(Usart *usart)
+static uint32_t usart_has_idle_line(const Usart *usart)
 {
     return usart->SR & USART_SR_IDLE;
 }
 
-static inline uint32_t usart_read_ready(Usart *usart) {
+static uint32_t usart_read_ready(const Usart *usart) {
     return usart->SR & USART_SR_RXNE;
 }
 
-static inline uint32_t usart_transmission_complete(Usart *usart)
+static uint32_t usart_transmission_data_reg_empty(const Usart *usart)
+{
+    return usart->SR & USART_SR_TXE;
+}
+
+static uint32_t usart_transmit_empty_interrupt_enabled(const Usart *usart)
+{
+    return usart->CR1 & USART_CR1_TXEIE;
+}
+
+static uint32_t usart_transmission_complete(const Usart *usart)
 {
     return usart->SR & USART_SR_TC;
 }
 
-static inline uint8_t usart_read_byte(Usart *usart)
+static uint32_t usart_transmission_complete_interrupt_enabled(const Usart *usart)
+{
+    return usart->CR1 & USART_CR1_TCIE;
+}
+
+static void usart_transmit_empty_interrupt_enable(Usart *usart)
+{
+    usart->CR1 |= USART_CR1_TXEIE;
+}
+
+static void usart_transmit_empty_interrupt_disable(Usart *usart)
+{
+    usart->CR1 &= ~USART_CR1_TXEIE;
+}
+
+static void usart_transmission_complete_interrupt_enable(Usart *usart)
+{
+    usart->CR1 |= USART_CR1_TCIE;
+}
+
+static void usart_transmission_complete_interrupt_disable(Usart *usart)
+{
+    usart->CR1 &= ~USART_CR1_TCIE;
+}
+
+static uint8_t usart_read_byte(const Usart *usart)
 {
     return (uint8_t) (usart->DR & 255); // bottom 8 bits of DR register hold received value
 }
@@ -139,9 +175,12 @@ void handle_usart_interrupt(Usart *usart)
     }
 
     UsartHandle *usart_handle = get_usart_handle(usart);
+    if (!usart_handle) return;
 
-    if (usart_read_ready(usart))
+    if (usart_read_ready(usart)) {
         ring_buf_push(&usart_handle->rx_ring_buffer, usart_read_byte(usart));
+        return;
+    }
 
     if (usart_has_idle_line(usart)) {
         uint8_t out;
@@ -149,17 +188,32 @@ void handle_usart_interrupt(Usart *usart)
             putchar(out); // TODO: substitute for callback
         printf("\r\n");
         usart->DR; // read to DR after read to SR clears SR IDLE bit
+        return;
+    }
+
+    if (usart_transmission_data_reg_empty(usart) && usart_transmit_empty_interrupt_enabled(usart)) {
+        if (!ring_buf_pop(&usart_handle->tx_ring_buffer, (uint8_t *) &usart->DR)) {
+            usart_transmit_empty_interrupt_disable(usart);
+            usart_transmission_complete_interrupt_enable(usart);
+        }
+        return;
+    }
+
+    if (usart_transmission_complete(usart) && usart_transmission_complete_interrupt_enabled(usart)) {
+        usart_transmission_complete_interrupt_disable(usart);
+        return;
     }
 }
 
-static inline void usart_write_byte(Usart *usart, const uint8_t data)
+void usart_write_buffer(Usart *usart, const uint8_t *buffer, size_t len)
 {
-    // TODO: use transmission complete interrupt instead of blocking
-    while (!(usart_transmission_complete(usart)));
-    usart->DR = data;
-}
+    UsartHandle *usart_handle = get_usart_handle(usart);
+    if (!usart_handle) return;
 
-void usart_write_buffer(Usart *usart, const char *buffer, size_t len)
-{
-    while (len-- > 0) usart_write_byte(usart, *(uint8_t *) buffer++);
+    if (len > USART_RING_BUF_SIZE) len = USART_RING_BUF_SIZE;
+    while (len-- > 0) ring_buf_push(&usart_handle->tx_ring_buffer, *buffer++);
+
+    usart_transmit_empty_interrupt_enable(usart);
+    while (usart_transmission_data_reg_empty(usart) == 0) {}
+    ring_buf_pop(&usart_handle->tx_ring_buffer, (uint8_t *) &usart->DR);
 }
