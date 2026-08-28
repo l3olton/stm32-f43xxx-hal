@@ -87,41 +87,42 @@ void usart_init(Usart *usart, const uint32_t usart_div)
     nvic_enable_interrupt(irq_handler);
 }
 
-static inline uint32_t usart_has_overrun_err(const Usart *usart)
+// TODO: check if these get inlined
+static uint32_t usart_has_overrun_err(const Usart *usart)
 {
     return usart->SR & USART_SR_ORE;
 }
 
-static inline uint32_t usart_has_framing_err(const Usart *usart)
+static uint32_t usart_has_framing_err(const Usart *usart)
 {
     return usart->SR & USART_SR_FE;
 }
 
-static inline uint32_t usart_has_parity_err(const Usart *usart)
+static uint32_t usart_has_parity_err(const Usart *usart)
 {
     return usart->SR & USART_SR_PE;
 }
 
-static inline uint32_t usart_has_idle_line(const Usart *usart)
+static uint32_t usart_has_idle_line(const Usart *usart)
 {
     return usart->SR & USART_SR_IDLE;
 }
 
-static inline uint32_t usart_read_ready(const Usart *usart) {
+static uint32_t usart_read_ready(const Usart *usart) {
     return usart->SR & USART_SR_RXNE;
 }
 
-static inline uint32_t usart_transmission_data_reg_empty(const Usart *usart)
+static uint32_t usart_transmission_data_reg_empty(const Usart *usart)
 {
     return usart->SR & USART_SR_TXE;
 }
 
-static inline uint32_t usart_transmission_complete(const Usart *usart)
+static uint32_t usart_transmission_complete(const Usart *usart)
 {
     return usart->SR & USART_SR_TC;
 }
 
-static inline uint8_t usart_read_byte(const Usart *usart)
+static uint8_t usart_read_byte(const Usart *usart)
 {
     return (uint8_t) (usart->DR & 255); // bottom 8 bits of DR register hold received value
 }
