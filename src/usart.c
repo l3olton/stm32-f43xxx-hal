@@ -191,7 +191,7 @@ void handle_usart_interrupt(Usart *usart)
         return;
     }
 
-    if (usart_transmission_data_reg_empty(usart) && usart_transmit_empty_interrupt_enabled(usart) != 0) {
+    if (usart_transmission_data_reg_empty(usart) && usart_transmit_empty_interrupt_enabled(usart)) {
         if (!ring_buf_pop(&usart_handle->tx_ring_buffer, (uint8_t *) &usart->DR)) {
             usart_transmit_empty_interrupt_disable(usart);
             usart_transmission_complete_interrupt_enable(usart);
@@ -199,7 +199,7 @@ void handle_usart_interrupt(Usart *usart)
         return;
     }
 
-    if (usart_transmission_complete(usart) && usart_transmission_complete_interrupt_enabled(usart) != 0) {
+    if (usart_transmission_complete(usart) && usart_transmission_complete_interrupt_enabled(usart)) {
         usart_transmission_complete_interrupt_disable(usart);
         return;
     }
@@ -215,6 +215,5 @@ void usart_write_buffer(Usart *usart, const uint8_t *buffer, size_t len)
     while (len-- > 0) ring_buf_push(&usart_handle->tx_ring_buffer, *buffer++);
 
     usart_transmit_empty_interrupt_enable(usart);
-
     ring_buf_pop(&usart_handle->tx_ring_buffer, (uint8_t *) &usart->DR);
 }
