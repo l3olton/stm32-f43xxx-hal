@@ -117,9 +117,39 @@ static uint32_t usart_transmission_data_reg_empty(const Usart *usart)
     return usart->SR & USART_SR_TXE;
 }
 
+static uint32_t usart_transmit_empty_interrupt_enabled(const Usart *usart)
+{
+    return usart->CR1 & USART_CR1_TXEIE;
+}
+
 static uint32_t usart_transmission_complete(const Usart *usart)
 {
     return usart->SR & USART_SR_TC;
+}
+
+static uint32_t usart_transmission_complete_interrupt_enabled(const Usart *usart)
+{
+    return usart->CR1 & USART_CR1_TCIE;
+}
+
+static void usart_transmit_empty_interrupt_enable(Usart *usart)
+{
+    usart->CR1 |= USART_CR1_TXEIE;
+}
+
+static void usart_transmit_empty_interrupt_disable(Usart *usart)
+{
+    usart->CR1 &= ~USART_CR1_TXEIE;
+}
+
+static void usart_transmission_complete_interrupt_enable(Usart *usart)
+{
+    usart->CR1 |= USART_CR1_TCIE;
+}
+
+static void usart_transmission_complete_interrupt_disable(Usart *usart)
+{
+    usart->CR1 &= ~USART_CR1_TCIE;
 }
 
 static uint8_t usart_read_byte(const Usart *usart)
@@ -161,16 +191,16 @@ void handle_usart_interrupt(Usart *usart)
         return;
     }
 
-    if (usart_transmission_data_reg_empty(usart) && (usart->CR1 & USART_CR1_TXEIE) != 0) {
+    if (usart_transmission_data_reg_empty(usart) && usart_transmit_empty_interrupt_enabled(usart) != 0) {
         if (!ring_buf_pop(&usart_handle->tx_ring_buffer, (uint8_t *) &usart->DR)) {
-            usart->CR1 &= ~USART_CR1_TXEIE;
-            usart->CR1 |= USART_CR1_TCIE; // TODO: funcs for these
+            usart_transmit_empty_interrupt_disable(usart);
+            usart_transmission_complete_interrupt_enable(usart);
         }
         return;
     }
 
-    if (usart_transmission_complete(usart) && (usart->CR1 & USART_CR1_TCIE) != 0) {
-        usart->CR1 &= ~USART_CR1_TCIE; // TODO: func
+    if (usart_transmission_complete(usart) && usart_transmission_complete_interrupt_enabled(usart) != 0) {
+        usart_transmission_complete_interrupt_disable(usart);
         return;
     }
 }
@@ -184,7 +214,7 @@ void usart_write_buffer(Usart *usart, const uint8_t *buffer, size_t len)
     if (len > USART_RING_BUF_SIZE) len = USART_RING_BUF_SIZE;
     while (len-- > 0) ring_buf_push(&usart_handle->tx_ring_buffer, *buffer++);
 
-    usart->CR1 |= USART_CR1_TXEIE; // TODO: function for this
+    usart_transmit_empty_interrupt_enable(usart);
 
     ring_buf_pop(&usart_handle->tx_ring_buffer, (uint8_t *) &usart->DR);
 }
