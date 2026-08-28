@@ -205,7 +205,6 @@ void handle_usart_interrupt(Usart *usart)
     }
 }
 
-// TODO: investigate chars getting dropped (maybe related to casting)
 void usart_write_buffer(Usart *usart, const uint8_t *buffer, size_t len)
 {
     UsartHandle *usart_handle = get_usart_handle(usart);
@@ -215,5 +214,6 @@ void usart_write_buffer(Usart *usart, const uint8_t *buffer, size_t len)
     while (len-- > 0) ring_buf_push(&usart_handle->tx_ring_buffer, *buffer++);
 
     usart_transmit_empty_interrupt_enable(usart);
+    while (usart_transmission_data_reg_empty(usart) == 0) {}
     ring_buf_pop(&usart_handle->tx_ring_buffer, (uint8_t *) &usart->DR);
 }
