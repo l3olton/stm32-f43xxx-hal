@@ -18,4 +18,6 @@ bool ring_buf_push(RingBuffer *rb, uint8_t byte);
 
 bool ring_buf_pop(RingBuffer *rb, uint8_t *output);
 
+void ring_buf_reset(RingBuffer *rb);
+
 #endif

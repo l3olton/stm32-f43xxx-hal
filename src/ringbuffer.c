@@ -36,3 +36,9 @@ bool ring_buf_pop(RingBuffer *rb, uint8_t *output)
     rb->read_index = (rb->read_index + 1) % rb->size;
     return true;
 }
+
+void ring_buf_reset(RingBuffer *rb)
+{
+    rb->write_index = 0;
+    rb->read_index = 0;
+}
