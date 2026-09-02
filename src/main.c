@@ -13,14 +13,41 @@ extern void HardFault_Handler(void)
     while (1);
 }
 
-static void put_byte(const uint8_t data)
+// TODO: separate into 'application layer'
+static void control_leds(RingBuffer *rb)
 {
-    putchar(data);
+    uint8_t color, command, nl;
+
+    if (!ring_buf_pop(rb, &color)) return;
+    if (!ring_buf_pop(rb, &command)) return;
+    if (!ring_buf_pop(rb, &nl)) return;
+
+    if (nl != '\n') {
+        ring_buf_reset(rb);
+        return;
+    }
+
+    uint16_t pin;
+    switch (color) {
+        case 'R': pin = RED_LED_PIN; break;
+        case 'G': pin = GREEN_LED_PIN; break;
+        case 'B': pin = BLUE_LED_PIN; break;
+        default: ring_buf_reset(rb); return;
+    }
+
+    bool value;
+    switch (command) {
+        case '1': value = true; break;
+        case '0': value = false; break;
+        default: ring_buf_reset(rb); return;
+    }
+
+    gpio_write(pin, value);
 }
 
 extern void USART3_IRQHandler(void)
 {
-    handle_usart_interrupt(USART3, put_byte);
+    handle_usart_interrupt(USART3, control_leds);
 }
 
 int main(void)
@@ -35,25 +62,7 @@ int main(void)
     gpio_set_mode(GREEN_LED_PIN, GPIO_MODE_OUTPUT);
     gpio_set_mode(RED_LED_PIN, GPIO_MODE_OUTPUT);
 
-    uint32_t led_timer = 0;
-    uint32_t delay_timer = 0;
-
-    while (1) {
-        if (timer_expired(&led_timer, 1500, s_ticks)) {
-            gpio_write(RED_LED_PIN, 1);
-            DELAY(delay_timer, 250);
-            gpio_write(BLUE_LED_PIN, 1);
-            DELAY(delay_timer, 250);
-            gpio_write(GREEN_LED_PIN, 1);
-            DELAY(delay_timer, 250);
-            gpio_write(RED_LED_PIN, 0);
-            DELAY(delay_timer, 250);
-            gpio_write(BLUE_LED_PIN, 0);
-            DELAY(delay_timer, 250);
-            gpio_write(GREEN_LED_PIN, 0);
-            DELAY(delay_timer, 250);
-        }
-    }
+    while (1) {}
 
     return 0;
 }
