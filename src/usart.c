@@ -183,10 +183,7 @@ void handle_usart_interrupt(Usart *usart, const UsartReceiveInterruptCallback ca
     }
 
     if (usart_has_idle_line(usart)) {
-        uint8_t out;
-        while (ring_buf_pop(&usart_handle->rx_ring_buffer, &out))
-            callback(out);
-        printf("\r\n");
+        callback(&usart_handle->rx_ring_buffer);
         usart->DR; // read to DR after read to SR clears SR IDLE bit
         return;
     }

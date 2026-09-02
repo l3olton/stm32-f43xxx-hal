@@ -2,6 +2,7 @@
 #define USART_H
 
 #include "utils.h"
+#include "ringbuffer.h"
 #include <stddef.h>
 #include <stdint.h>
 
@@ -32,7 +33,7 @@ typedef struct {
 #define USART_SR_TC BIT(6)
 #define USART_SR_TXE BIT(7)
 
-typedef void (*UsartReceiveInterruptCallback)(uint8_t data);
+typedef void (*UsartReceiveInterruptCallback)(RingBuffer *rb);
 
 void usart_init(Usart *usart, uint32_t usart_div);
 
