@@ -157,7 +157,7 @@ static uint8_t usart_read_byte(const Usart *usart)
     return (uint8_t) (usart->DR & 255); // bottom 8 bits of DR register hold received value
 }
 
-void handle_usart_interrupt(Usart *usart)
+void handle_usart_interrupt(Usart *usart, const UsartReceiveInterruptCallback callback)
 {
     if (usart_has_overrun_err(usart)) {
         printf("Overrun error\r\n");
@@ -185,7 +185,7 @@ void handle_usart_interrupt(Usart *usart)
     if (usart_has_idle_line(usart)) {
         uint8_t out;
         while (ring_buf_pop(&usart_handle->rx_ring_buffer, &out))
-            putchar(out); // TODO: substitute for callback
+            callback(out);
         printf("\r\n");
         usart->DR; // read to DR after read to SR clears SR IDLE bit
         return;

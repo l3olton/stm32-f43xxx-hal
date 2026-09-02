@@ -13,9 +13,14 @@ extern void HardFault_Handler(void)
     while (1);
 }
 
+static void put_byte(const uint8_t data)
+{
+    putchar(data);
+}
+
 extern void USART3_IRQHandler(void)
 {
-    handle_usart_interrupt(USART3);
+    handle_usart_interrupt(USART3, put_byte);
 }
 
 int main(void)

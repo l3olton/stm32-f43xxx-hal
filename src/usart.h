@@ -32,9 +32,11 @@ typedef struct {
 #define USART_SR_TC BIT(6)
 #define USART_SR_TXE BIT(7)
 
+typedef void (*UsartReceiveInterruptCallback)(uint8_t data);
+
 void usart_init(Usart *usart, uint32_t usart_div);
 
-void handle_usart_interrupt(Usart *usart);
+void handle_usart_interrupt(Usart *usart, UsartReceiveInterruptCallback callback);
 
 void usart_write_buffer(Usart *usart, const uint8_t *buffer, size_t len);
 
