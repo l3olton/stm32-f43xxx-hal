@@ -7,13 +7,13 @@
 
 #define FREQ 16000000 // CPU frequency 16Mhz
 
-void HardFault_Handler(void)
+extern void HardFault_Handler(void)
 {
     printf("Hard fault\r\n");
     while (1);
 }
 
-void USART3_IRQHandler(void)
+extern void USART3_IRQHandler(void)
 {
     handle_usart_interrupt(USART3);
 }
